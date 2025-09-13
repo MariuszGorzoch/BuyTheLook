@@ -260,28 +260,15 @@ function updateFilterImages(filters, allImages, selected) {
     });
   }
 
-const mainDisplay = document.getElementById('main-display');
-const lazyObserver = new IntersectionObserver((entries, observer) => {
-  entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      const imgEl = entry.target;
-      imgEl.src = imgEl.dataset.src;
-      imgEl.removeAttribute('data-src');
-      observer.unobserve(imgEl);
-    }
-  });
-}, { root: mainDisplay });
-
 function renderImages(images, productMap) {
   const collage = document.getElementById('collage');
   collage.innerHTML = '';
-  lazyObserver.disconnect();
   images.forEach(img => {
     const container = document.createElement('div');
     container.className = 'collage-item';
 
     const imgEl = document.createElement('img');
-    imgEl.setAttribute('data-src', img.file);
+    imgEl.src = img.file;
     container.appendChild(imgEl);
 
     const info = document.createElement('div');
@@ -299,7 +286,6 @@ function renderImages(images, productMap) {
     container.appendChild(info);
 
     collage.appendChild(container);
-    lazyObserver.observe(imgEl);
   });
 }
 
