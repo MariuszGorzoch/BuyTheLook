@@ -255,7 +255,10 @@ function renderImages(images) {
     const info = document.createElement('div');
     info.className = 'product-info';
     info.innerHTML = img.products
-      .map(p => `${p.brand} ${p.name} ${p.size}`)
+      .map(p => {
+        const sizePart = p.size && p.size !== '0' ? ` ${p.size}` : '';
+        return `${p.brand} ${p.name}${sizePart}`;
+      })
       .join('<br>');
     container.appendChild(info);
 
