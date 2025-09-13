@@ -40,8 +40,8 @@ body {
       gap: 5px;
     }
     .filter button img {
-      width: 20px;
-      height: 20px;
+      width: 60px;
+      height: 60px;
       object-fit: cover;
     }
   .filter .options {
@@ -168,15 +168,16 @@ function updateFilterImages(filters, allImages, selected) {
 
   function updateFilterButtons(buttons, selected, filters) {
     Object.entries(buttons).forEach(([type, data]) => {
-      const { button, label, preview } = data;
+      const { label, preview } = data;
       if (selected[type]) {
-        label.textContent = `${type}: ${selected[type]}`;
+        label.style.display = 'none';
         const imgEl = filters[type][selected[type]];
         if (imgEl) {
           preview.src = imgEl.src;
-          preview.style.display = 'inline';
+          preview.style.display = 'inline-block';
         }
       } else {
+        label.style.display = 'inline';
         label.textContent = type;
         preview.style.display = 'none';
       }
