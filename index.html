@@ -117,7 +117,7 @@ body {
   column-count: 3;
   column-gap: 10px;
 }
-#collage img {
+#collage .collage-item > img {
   width: 100%;
   height: auto;
   display: block;
@@ -136,10 +136,17 @@ body {
   background: rgba(0, 0, 0, 0.7);
   color: #fff;
   padding: 4px 6px;
-  font-weight: bold;
+  font-weight: normal;
   font-family: sans-serif;
   font-size: 14px;
   line-height: 1.2;
+}
+.product-info img {
+  height: 1em;
+  width: auto;
+  vertical-align: middle;
+  margin-right: 4px;
+  display: inline;
 }
 #logo {
   position: absolute;
@@ -253,15 +260,29 @@ function updateFilterImages(filters, allImages, selected) {
     });
   }
 
-function renderImages(images) {
+const mainDisplay = document.getElementById('main-display');
+const lazyObserver = new IntersectionObserver((entries, observer) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const imgEl = entry.target;
+      imgEl.src = imgEl.dataset.src;
+      imgEl.removeAttribute('data-src');
+      observer.unobserve(imgEl);
+    }
+  });
+}, { root: mainDisplay });
+
+function renderImages(images, productMap) {
   const collage = document.getElementById('collage');
   collage.innerHTML = '';
+  lazyObserver.disconnect();
   images.forEach(img => {
     const container = document.createElement('div');
     container.className = 'collage-item';
 
     const imgEl = document.createElement('img');
-    imgEl.src = img.file;
+    imgEl.setAttribute('data-src', img.file);
+    lazyObserver.observe(imgEl);
     container.appendChild(imgEl);
 
     const info = document.createElement('div');
@@ -270,7 +291,10 @@ function renderImages(images) {
       .map(p => {
         const sizePart = p.size && p.size !== '0' ? ` ${p.size}` : '';
         const displayName = p.name === p.brand ? p.name : `${p.brand} ${p.name}`;
-        return `${displayName}${sizePart}`;
+        const typeImage = productMap[p.type] && productMap[p.type][p.brand]
+          ? `<img src="${productMap[p.type][p.brand]}" alt="">`
+          : '';
+        return `${typeImage}${p.type} ${displayName}${sizePart}`;
       })
       .join('<br>');
     container.appendChild(info);
@@ -279,76 +303,89 @@ function renderImages(images) {
   });
 }
 
-const files = [
-  '20250913_p0-Torba-EvenOdd-0-EvenOdd.jpg',
-  '20250913_p0-Torba-GreenBag-0-GreenBag.JPEG',
-  '20250913_p0_Suknia-Czerwona-M-Czerwona.JPEG',
-  '20250913_p0_Torba-BrownBag-0-BrownBag.JPEG',
-  '20250913_p1_Suknia-Czerwona-M-Czerwona_p2_Torba_BrownBag-0-BrownBag.jpg',
-  '20250913_p1_Suknia-Czerwona-M-Czerwona_p2_Torba_EvenOdd-0-EvenOdd.jpg',
-  '20250913_p1_Suknia-Czerwona-M-Czerwona_p2_Torba_GreenBag-0-GreenBag.jpg'
-];
+const containerUrl = 'https://buythelookstorage.blob.core.windows.net/products';
+const sasToken = 'sp=rl&st=2025-09-13T16:15:26Z&se=2025-09-14T00:30:26Z&spr=https&sv=2024-11-04&sr=c&sig=E0zGPK9lw1CqM%2Fs4IPS2FNJ9q986sibHkJ1mRIcj7HQ%3D';
 
-function init() {
-  const images = files.map(parseFileName);
-  const productsByType = buildProductImageMap(images);
-  const selected = {};
-  const filters = {};
-  const buttons = {};
-  const filterContainer = document.getElementById('filters');
+async function fetchFiles() {
+  const url = `${containerUrl}?restype=container&comp=list&${sasToken}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Request failed with status ${res.status}`);
+  }
+  const text = await res.text();
+  const xml = new window.DOMParser().parseFromString(text, 'application/xml');
+  return Array.from(xml.getElementsByTagName('Name')).map(n => n.textContent);
+}
 
-  Object.keys(productsByType).forEach(type => {
-    const wrapper = document.createElement('div');
-    wrapper.className = 'filter';
-    const button = document.createElement('button');
-    const preview = document.createElement('img');
-    preview.className = 'preview';
-    const label = document.createElement('span');
-    label.className = 'label';
-    label.textContent = `Wybierz\n${type}`;
-    button.appendChild(preview);
-    button.appendChild(label);
-    const options = document.createElement('div');
-    options.className = 'options';
-    button.addEventListener('click', () => {
-      document.querySelectorAll('#filters .filter').forEach(f => {
-        if (f !== wrapper) f.classList.remove('open');
-      });
-      wrapper.classList.toggle('open');
+async function init() {
+  try {
+    const files = await fetchFiles();
+    const images = files.map(file => {
+      const parsed = parseFileName(file);
+      parsed.file = `${containerUrl}/${file}?${sasToken}`;
+      return parsed;
     });
-    wrapper.appendChild(button);
-    wrapper.appendChild(options);
-    filterContainer.appendChild(wrapper);
-    filters[type] = {};
-    selected[type] = null;
-    buttons[type] = { button, label, preview };
-    Object.entries(productsByType[type]).forEach(([brand, imgPath]) => {
-      const imgEl = document.createElement('img');
-      imgEl.src = imgPath;
-      imgEl.alt = brand;
-      imgEl.addEventListener('click', () => {
-        if (selected[type] === brand) {
-          selected[type] = null;
-          imgEl.classList.remove('selected');
-        } else {
-          selected[type] = brand;
-          Object.values(filters[type]).forEach(el => el.classList.remove('selected'));
-          imgEl.classList.add('selected');
-        }
-        updateFilterImages(filters, images, selected);
-        updateFilterButtons(buttons, selected, filters);
-        const filteredImages = filterImages(images, selected);
-        renderImages(filteredImages);
-        wrapper.classList.remove('open');
+    const productsByType = buildProductImageMap(images);
+    const selected = {};
+    const filters = {};
+    const buttons = {};
+    const filterContainer = document.getElementById('filters');
+
+    Object.keys(productsByType).forEach(type => {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'filter';
+      const button = document.createElement('button');
+      const preview = document.createElement('img');
+      preview.className = 'preview';
+      const label = document.createElement('span');
+      label.className = 'label';
+      label.textContent = `Wybierz\n${type}`;
+      button.appendChild(preview);
+      button.appendChild(label);
+      const options = document.createElement('div');
+      options.className = 'options';
+      button.addEventListener('click', () => {
+        document.querySelectorAll('#filters .filter').forEach(f => {
+          if (f !== wrapper) f.classList.remove('open');
+        });
+        wrapper.classList.toggle('open');
       });
-      options.appendChild(imgEl);
-      filters[type][brand] = imgEl;
+      wrapper.appendChild(button);
+      wrapper.appendChild(options);
+      filterContainer.appendChild(wrapper);
+      filters[type] = {};
+      selected[type] = null;
+      buttons[type] = { button, label, preview };
+      Object.entries(productsByType[type]).forEach(([brand, imgPath]) => {
+        const imgEl = document.createElement('img');
+        imgEl.src = imgPath;
+        imgEl.alt = brand;
+        imgEl.addEventListener('click', () => {
+          if (selected[type] === brand) {
+            selected[type] = null;
+            imgEl.classList.remove('selected');
+          } else {
+            selected[type] = brand;
+            Object.values(filters[type]).forEach(el => el.classList.remove('selected'));
+            imgEl.classList.add('selected');
+          }
+          updateFilterImages(filters, images, selected);
+          updateFilterButtons(buttons, selected, filters);
+            const filteredImages = filterImages(images, selected);
+            renderImages(filteredImages, productsByType);
+          wrapper.classList.remove('open');
+        });
+        options.appendChild(imgEl);
+        filters[type][brand] = imgEl;
+      });
     });
-  });
-  updateFilterImages(filters, images, selected);
-  updateFilterButtons(buttons, selected, filters);
-  const filteredImages = filterImages(images, selected);
-  renderImages(filteredImages);
+    updateFilterImages(filters, images, selected);
+    updateFilterButtons(buttons, selected, filters);
+      const filteredImages = filterImages(images, selected);
+      renderImages(filteredImages, productsByType);
+  } catch (err) {
+    console.error('Failed to load product images', err);
+  }
 }
 
 init();
