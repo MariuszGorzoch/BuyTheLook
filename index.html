@@ -120,8 +120,26 @@ body {
 #collage img {
   width: 100%;
   height: auto;
-  margin-bottom: 10px;
   display: block;
+}
+
+.collage-item {
+  position: relative;
+  margin-bottom: 10px;
+  break-inside: avoid;
+}
+
+.product-info {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  padding: 4px 6px;
+  font-weight: bold;
+  font-family: sans-serif;
+  font-size: 14px;
+  line-height: 1.2;
 }
 #logo {
   position: absolute;
@@ -227,9 +245,21 @@ function renderImages(images) {
   const collage = document.getElementById('collage');
   collage.innerHTML = '';
   images.forEach(img => {
+    const container = document.createElement('div');
+    container.className = 'collage-item';
+
     const imgEl = document.createElement('img');
     imgEl.src = img.file;
-    collage.appendChild(imgEl);
+    container.appendChild(imgEl);
+
+    const info = document.createElement('div');
+    info.className = 'product-info';
+    info.innerHTML = img.products
+      .map(p => `${p.brand} ${p.name} ${p.size}`)
+      .join('<br>');
+    container.appendChild(info);
+
+    collage.appendChild(container);
   });
 }
 
