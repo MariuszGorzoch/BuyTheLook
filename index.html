@@ -282,7 +282,6 @@ function renderImages(images, productMap) {
 
     const imgEl = document.createElement('img');
     imgEl.setAttribute('data-src', img.file);
-    lazyObserver.observe(imgEl);
     container.appendChild(imgEl);
 
     const info = document.createElement('div');
@@ -300,6 +299,7 @@ function renderImages(images, productMap) {
     container.appendChild(info);
 
     collage.appendChild(container);
+    lazyObserver.observe(imgEl);
   });
 }
 
