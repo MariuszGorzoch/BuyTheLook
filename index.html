@@ -65,13 +65,10 @@ body {
 }
 #collage img {
   width: 100%;
+  height: auto;
   margin-bottom: 10px;
   display: block;
-  object-fit: cover;
 }
-#collage img.size-small { height: 120px; }
-#collage img.size-medium { height: 180px; }
-#collage img.size-large { height: 240px; }
 </style>
 </head>
 <body>
@@ -147,11 +144,9 @@ function updateFilterImages(filters, allImages, selected) {
 function renderImages(images) {
   const collage = document.getElementById('collage');
   collage.innerHTML = '';
-  const sizes = ['size-small', 'size-medium', 'size-large'];
-  images.forEach((img, index) => {
+  images.forEach(img => {
     const imgEl = document.createElement('img');
     imgEl.src = img.file;
-    imgEl.classList.add(sizes[index % sizes.length]);
     collage.appendChild(imgEl);
   });
 }
@@ -164,7 +159,7 @@ function init() {
     '20250913_p1_Suknia-Czerwona-M-Czerwona_p2_Torba_BrownBag-0-BrownBag.jpg',
     '20250913_p1_Suknia-Czerwona-M-Czerwona_p2_Torba_EvenOdd-0-EvenOdd.jpg',
     '20250913_p1_Suknia-Czerwona-M-Czerwona_p2_Torba_GreenBag-0-GreenBag.jpg',
-    '20250913_p1_Torba-BrownBage-0-BrownBag.JPEG'
+    '20250913_p1_Torba-BrownBag-0-BrownBag.JPEG'
   ];
   const images = files.map(parseFileName);
   const productsByType = buildProductImageMap(images);
