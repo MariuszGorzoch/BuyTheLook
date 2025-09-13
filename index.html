@@ -279,9 +279,17 @@ function renderImages(images) {
   });
 }
 
-async function init() {
-  const res = await fetch('/files');
-  const files = await res.json();
+const files = [
+  '20250913_p0-Torba-EvenOdd-0-EvenOdd.jpg',
+  '20250913_p0-Torba-GreenBag-0-GreenBag.JPEG',
+  '20250913_p0_Suknia-Czerwona-M-Czerwona.JPEG',
+  '20250913_p0_Torba-BrownBag-0-BrownBag.JPEG',
+  '20250913_p1_Suknia-Czerwona-M-Czerwona_p2_Torba_BrownBag-0-BrownBag.jpg',
+  '20250913_p1_Suknia-Czerwona-M-Czerwona_p2_Torba_EvenOdd-0-EvenOdd.jpg',
+  '20250913_p1_Suknia-Czerwona-M-Czerwona_p2_Torba_GreenBag-0-GreenBag.jpg'
+];
+
+function init() {
   const images = files.map(parseFileName);
   const productsByType = buildProductImageMap(images);
   const selected = {};
@@ -343,7 +351,7 @@ async function init() {
   renderImages(filteredImages);
 }
 
-init().catch(console.error);
+init();
 </script>
 </body>
 </html>

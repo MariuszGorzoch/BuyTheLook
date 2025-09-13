@@ -14,20 +14,6 @@ const mimeTypes = {
 };
 
 const server = http.createServer((req, res) => {
-  if (req.url === '/files') {
-    fs.readdir('.', (err, files) => {
-      if (err) {
-        res.writeHead(500);
-        res.end('Server error');
-        return;
-      }
-      const images = files.filter(f => /\.(jpe?g)$/i.test(f));
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(images));
-    });
-    return;
-  }
-
   const filePath = path.join('.', req.url === '/' ? 'index.html' : req.url);
   fs.readFile(filePath, (err, data) => {
     if (err) {
