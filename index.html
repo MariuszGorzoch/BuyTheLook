@@ -10,20 +10,15 @@ html, body {
   overflow: hidden;
 }
 body {
-  display: block;
-}
-#filters {
-  position: fixed;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 150px;
   display: flex;
   flex-direction: column;
+}
+#filters {
+  display: flex;
   gap: 10px;
   padding: 10px;
   background: #f2f2f2;
-  overflow-y: auto;
+  overflow-x: auto;
 }
 .filter {
   display: flex;
@@ -38,19 +33,10 @@ body {
 .filter .options {
   display: none;
   gap: 5px;
+  margin-top: 5px;
 }
 .filter[open] .options {
   display: flex;
-  flex-direction: column;
-  position: fixed;
-  left: 150px;
-  top: 0;
-  bottom: 0;
-  width: 150px;
-  background: rgba(255, 255, 255, 0.95);
-  padding: 10px;
-  overflow-y: auto;
-  z-index: 1000;
 }
 .filter .options img {
   width: 120px;
@@ -58,7 +44,6 @@ body {
   object-fit: cover;
   border: 2px solid transparent;
   cursor: pointer;
-  margin-bottom: 5px;
 }
 .filter .options img.selected {
   border-color: #007BFF;
@@ -68,8 +53,7 @@ body {
   pointer-events: none;
 }
 #main-display {
-  margin-left: 150px;
-  height: 100%;
+  flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
   padding: 10px;
