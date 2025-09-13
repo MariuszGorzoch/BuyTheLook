@@ -20,7 +20,7 @@ body {
       background: #f2f2f2;
       overflow-x: auto;
       position: relative;
-      z-index: 5;
+      z-index: 1000;
     }
   .filter {
     position: relative;
@@ -45,7 +45,7 @@ body {
     overflow-y: auto;
     padding: 10px;
     width: 150px;
-    z-index: 999;
+    z-index: 1001;
   }
   .filter[open] .options {
     display: flex;
@@ -70,6 +70,8 @@ body {
   overflow-x: hidden;
   padding: 10px;
   background: #fff;
+  position: relative;
+  z-index: 1;
 }
 #collage {
   column-count: 3;
