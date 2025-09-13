@@ -20,11 +20,31 @@ body {
   background: #f2f2f2;
   overflow-x: auto;
 }
-#filters label {
+.filter {
   display: flex;
   flex-direction: column;
+  align-items: center;
   font-family: sans-serif;
   font-size: 14px;
+}
+.filter .options {
+  display: flex;
+  gap: 5px;
+  margin-top: 5px;
+}
+.filter .options img {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border: 2px solid transparent;
+  cursor: pointer;
+}
+.filter .options img.selected {
+  border-color: #007BFF;
+}
+.filter .options img.disabled {
+  opacity: 0.3;
+  pointer-events: none;
 }
 #main-display {
   flex: 1;
@@ -89,12 +109,12 @@ function parseFileName(file) {
   return { shotId, file, products };
 }
 
-function buildProductsByType(images) {
+function buildProductImageMap(images) {
   const map = {};
   images.forEach(img => {
     img.products.forEach(p => {
-      if (!map[p.type]) map[p.type] = new Set();
-      map[p.type].add(p.brand);
+      if (!map[p.type]) map[p.type] = {};
+      if (!map[p.type][p.brand]) map[p.type][p.brand] = img.file;
     });
   });
   return map;
@@ -108,23 +128,25 @@ function filterImages(images, selected) {
   );
 }
 
-function updateFilterOptions(filters, allImages, selected) {
-  Object.entries(filters).forEach(([type, select]) => {
+function updateFilterImages(filters, allImages, selected) {
+  Object.entries(filters).forEach(([type, brandMap]) => {
     const tempSelected = { ...selected, [type]: null };
     const filtered = filterImages(allImages, tempSelected);
-    const options = new Set();
+    const available = new Set();
     filtered.forEach(img => {
-      img.products.filter(p => p.type === type).forEach(p => options.add(p.brand));
+      img.products.filter(p => p.type === type).forEach(p => available.add(p.brand));
     });
-    const current = selected[type];
-    select.innerHTML = '<option value="">All</option>' +
-      Array.from(options).map(o => `<option value="${o}">${o}</option>`).join('');
-    if (current && options.has(current)) {
-      select.value = current;
-    } else {
-      select.value = '';
-      selected[type] = null;
-    }
+    Object.entries(brandMap).forEach(([brand, imgEl]) => {
+      if (available.has(brand)) {
+        imgEl.classList.remove('disabled');
+      } else {
+        imgEl.classList.add('disabled');
+      }
+      if (!available.has(brand) && selected[type] === brand) {
+        selected[type] = null;
+        imgEl.classList.remove('selected');
+      }
+    });
   });
 }
 
@@ -170,7 +192,7 @@ function init() {
     '20250913_p1_Torba-BrownBage-0-BrownBag.JPEG'
   ];
   const images = files.map(parseFileName);
-  const productsByType = buildProductsByType(images);
+  const productsByType = buildProductImageMap(images);
   const selected = {};
   const filters = {};
   const filterContainer = document.getElementById('filters');
@@ -193,21 +215,39 @@ function init() {
   });
 
   Object.keys(productsByType).forEach(type => {
-    const label = document.createElement('label');
-    label.textContent = type;
-    const select = document.createElement('select');
-    select.addEventListener('change', () => {
-      selected[type] = select.value || null;
-      updateFilterOptions(filters, images, selected);
-      const filteredImages = filterImages(images, selected);
-      renderImages(document.getElementById('main-display'), filteredImages);
-    });
-    label.appendChild(select);
-    filterContainer.appendChild(label);
-    filters[type] = select;
+    const wrapper = document.createElement('div');
+    wrapper.className = 'filter';
+    const title = document.createElement('span');
+    title.textContent = type;
+    const options = document.createElement('div');
+    options.className = 'options';
+    wrapper.appendChild(title);
+    wrapper.appendChild(options);
+    filterContainer.appendChild(wrapper);
+    filters[type] = {};
     selected[type] = null;
+    Object.entries(productsByType[type]).forEach(([brand, imgPath]) => {
+      const imgEl = document.createElement('img');
+      imgEl.src = imgPath;
+      imgEl.alt = brand;
+      imgEl.addEventListener('click', () => {
+        if (selected[type] === brand) {
+          selected[type] = null;
+          imgEl.classList.remove('selected');
+        } else {
+          selected[type] = brand;
+          Object.values(filters[type]).forEach(el => el.classList.remove('selected'));
+          imgEl.classList.add('selected');
+        }
+        updateFilterImages(filters, images, selected);
+        const filteredImages = filterImages(images, selected);
+        renderImages(document.getElementById('main-display'), filteredImages);
+      });
+      options.appendChild(imgEl);
+      filters[type][brand] = imgEl;
+    });
   });
-  updateFilterOptions(filters, images, selected);
+  updateFilterImages(filters, images, selected);
   const filteredImages = filterImages(images, selected);
   renderImages(document.getElementById('main-display'), filteredImages);
 }
