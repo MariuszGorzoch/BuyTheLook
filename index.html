@@ -282,6 +282,10 @@ function renderImages(images, productMap) {
 
     const imgEl = document.createElement('img');
     imgEl.setAttribute('data-src', img.file);
+    imgEl.style.minHeight = '300px';
+    imgEl.addEventListener('load', () => {
+      imgEl.style.minHeight = '';
+    });
     container.appendChild(imgEl);
 
     const info = document.createElement('div');
