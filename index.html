@@ -18,9 +18,9 @@ body {
       gap: 10px;
       padding: 10px;
       background: #f2f2f2;
-      overflow-x: auto;
       position: relative;
       z-index: 1000;
+      overflow: visible;
     }
   .filter {
     position: relative;
@@ -30,9 +30,12 @@ body {
     font-family: sans-serif;
     font-size: 14px;
   }
-.filter summary {
-  cursor: pointer;
-}
+  .filter button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font: inherit;
+  }
   .filter .options {
     display: none;
     gap: 5px;
@@ -47,7 +50,7 @@ body {
     width: 150px;
     z-index: 1001;
   }
-  .filter[open] .options {
+  .filter.open .options {
     display: flex;
   }
 .filter .options img {
@@ -182,13 +185,19 @@ function init() {
   const filterContainer = document.getElementById('filters');
 
   Object.keys(productsByType).forEach(type => {
-    const wrapper = document.createElement('details');
+    const wrapper = document.createElement('div');
     wrapper.className = 'filter';
-    const summary = document.createElement('summary');
-    summary.textContent = type;
+    const button = document.createElement('button');
+    button.textContent = type;
     const options = document.createElement('div');
     options.className = 'options';
-    wrapper.appendChild(summary);
+    button.addEventListener('click', () => {
+      document.querySelectorAll('#filters .filter').forEach(f => {
+        if (f !== wrapper) f.classList.remove('open');
+      });
+      wrapper.classList.toggle('open');
+    });
+    wrapper.appendChild(button);
     wrapper.appendChild(options);
     filterContainer.appendChild(wrapper);
     filters[type] = {};
@@ -209,6 +218,7 @@ function init() {
         updateFilterImages(filters, images, selected);
         const filteredImages = filterImages(images, selected);
         renderImages(filteredImages);
+        wrapper.classList.remove('open');
       });
       options.appendChild(imgEl);
       filters[type][brand] = imgEl;
