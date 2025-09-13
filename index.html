@@ -257,7 +257,8 @@ function renderImages(images) {
     info.innerHTML = img.products
       .map(p => {
         const sizePart = p.size && p.size !== '0' ? ` ${p.size}` : '';
-        return `${p.brand} ${p.name}${sizePart}`;
+        const displayName = p.name === p.brand ? p.name : `${p.brand} ${p.name}`;
+        return `${displayName}${sizePart}`;
       })
       .join('<br>');
     container.appendChild(info);
