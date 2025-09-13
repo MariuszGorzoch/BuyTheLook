@@ -13,13 +13,15 @@ body {
   display: flex;
   flex-direction: column;
 }
-#filters {
-  display: flex;
-  gap: 10px;
-  padding: 10px;
-  background: #f2f2f2;
-  overflow-x: auto;
-}
+  #filters {
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    background: #f2f2f2;
+    overflow-x: auto;
+    position: relative;
+    z-index: 2;
+  }
 .filter {
   display: flex;
   flex-direction: column;
@@ -30,14 +32,23 @@ body {
 .filter summary {
   cursor: pointer;
 }
-.filter .options {
-  display: none;
-  gap: 5px;
-  margin-top: 5px;
-}
-.filter[open] .options {
-  display: flex;
-}
+  .filter .options {
+    display: none;
+    gap: 5px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #fff;
+    flex-direction: column;
+    overflow-y: auto;
+    padding: 10px;
+    z-index: 1;
+  }
+  .filter[open] .options {
+    display: flex;
+  }
 .filter .options img {
   width: 120px;
   height: 120px;
