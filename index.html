@@ -28,13 +28,11 @@ body {
 }
 #main-display {
   flex: 1;
-  overflow: auto;
+  overflow: hidden;
   display: flex;
-  flex-wrap: wrap;
   justify-content: center;
-  align-content: flex-start;
   align-items: center;
-  gap: 10px;
+  position: relative;
   padding: 10px;
   background: #fff;
 }
@@ -45,11 +43,28 @@ body {
   height: auto;
   object-fit: contain;
 }
+#main-display .nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  border: none;
+  font-size: 24px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+#main-display .prev { left: 10px; }
+#main-display .next { right: 10px; }
 </style>
 </head>
 <body>
 <div id="filters"></div>
-<div id="main-display"></div>
+<div id="main-display">
+  <button class="nav prev">&#10094;</button>
+  <img id="carousel-image" />
+  <button class="nav next">&#10095;</button>
+</div>
 <script>
 function parseFileName(file) {
   const base = file.replace(/\.[^.]+$/, '');
@@ -113,13 +128,35 @@ function updateFilterOptions(filters, allImages, selected) {
   });
 }
 
+let currentImages = [];
+let currentIndex = 0;
+
+function showImage() {
+  const imgEl = document.getElementById('carousel-image');
+  if (!currentImages.length) {
+    imgEl.style.display = 'none';
+    return;
+  }
+  imgEl.style.display = '';
+  imgEl.src = currentImages[currentIndex].file;
+}
+
+function showPrev() {
+  if (!currentImages.length) return;
+  currentIndex = (currentIndex - 1 + currentImages.length) % currentImages.length;
+  showImage();
+}
+
+function showNext() {
+  if (!currentImages.length) return;
+  currentIndex = (currentIndex + 1) % currentImages.length;
+  showImage();
+}
+
 function renderImages(container, images) {
-  container.innerHTML = '';
-  images.forEach(img => {
-    const el = document.createElement('img');
-    el.src = img.file;
-    container.appendChild(el);
-  });
+  currentImages = images;
+  currentIndex = 0;
+  showImage();
 }
 
 function init() {
@@ -137,6 +174,24 @@ function init() {
   const selected = {};
   const filters = {};
   const filterContainer = document.getElementById('filters');
+  const mainDisplay = document.getElementById('main-display');
+  mainDisplay.querySelector('.prev').addEventListener('click', showPrev);
+  mainDisplay.querySelector('.next').addEventListener('click', showNext);
+  let startX = null;
+  mainDisplay.addEventListener('touchstart', e => {
+    startX = e.touches[0].clientX;
+  });
+  mainDisplay.addEventListener('touchend', e => {
+    if (startX === null) return;
+    const diff = e.changedTouches[0].clientX - startX;
+    if (diff > 50) {
+      showPrev();
+    } else if (diff < -50) {
+      showNext();
+    }
+    startX = null;
+  });
+
   Object.keys(productsByType).forEach(type => {
     const label = document.createElement('label');
     label.textContent = type;
