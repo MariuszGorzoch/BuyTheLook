@@ -163,21 +163,30 @@ function parseFileName(file) {
   const base = file.replace(/\.[^.]+$/, '');
   const [shotId, ...productParts] = base.split('_p');
   const products = productParts.map(part => {
-    const tokens = part.split('_');
-    const num = tokens[0];
-    let type, brand, size, name;
-    if (tokens.length === 1) {
-      const [id, t, b, s, ...n] = tokens[0].split('-');
-      type = t; brand = b; size = s; name = n.join('-');
-    } else if (tokens.length === 2) {
-      const rest = tokens[1].split('-');
-      type = rest[0]; brand = rest[1]; size = rest[2]; name = rest.slice(3).join('-');
-    } else {
-      type = tokens[1];
-      const rest = tokens.slice(2).join('_').split('-');
-      brand = rest[0]; size = rest[1]; name = rest.slice(2).join('-');
+    const hyphenIndex = part.indexOf('-');
+    const underscoreIndex = part.indexOf('_');
+    let firstSepIndex;
+    if (hyphenIndex === -1) firstSepIndex = underscoreIndex;
+    else if (underscoreIndex === -1) firstSepIndex = hyphenIndex;
+    else firstSepIndex = Math.min(hyphenIndex, underscoreIndex);
+    let num = part;
+    let rest = '';
+    if (firstSepIndex !== -1) {
+      num = part.slice(0, firstSepIndex);
+      rest = part.slice(firstSepIndex + 1);
     }
-    return { number: num, type, brand, size, name };
+    let type, brand, size, name;
+    const tokens = rest.split('_');
+    if (tokens.length === 1) {
+      const [t, b, s, ...nParts] = rest.split('-');
+      type = t; brand = b; size = s; name = nParts.join('-');
+    } else {
+      type = tokens[0];
+      const other = tokens.slice(1).join('_');
+      const [b, s, ...nParts] = other.split('-');
+      brand = b; size = s; name = nParts.join('-');
+    }
+    return { number: num, type, brand, size, name, primary: num === '0' };
   });
   return { shotId, file, products };
 }
@@ -187,6 +196,7 @@ function buildProductImageMap(images) {
   images.forEach(img => {
     if (img.products.length !== 1) return;
     const p = img.products[0];
+    if (!p.primary) return;
     if (!map[p.type]) map[p.type] = {};
     map[p.type][p.brand] = img.file;
   });
@@ -207,7 +217,9 @@ function updateFilterImages(filters, allImages, selected) {
     const filtered = filterImages(allImages, tempSelected);
     const available = new Set();
     filtered.forEach(img => {
-      img.products.filter(p => p.type === type).forEach(p => available.add(p.brand));
+      img.products
+        .filter(p => p.type === type && p.number === '0')
+        .forEach(p => available.add(p.brand));
     });
     Object.entries(brandMap).forEach(([brand, imgEl]) => {
       if (available.has(brand)) {
@@ -267,16 +279,17 @@ function renderImages(images) {
   });
 }
 
+const files = [
+  '20250913_p0-Torba-EvenOdd-0-EvenOdd.jpg',
+  '20250913_p0-Torba-GreenBag-0-GreenBag.JPEG',
+  '20250913_p0_Suknia-Czerwona-M-Czerwona.JPEG',
+  '20250913_p0_Torba-BrownBag-0-BrownBag.JPEG',
+  '20250913_p1_Suknia-Czerwona-M-Czerwona_p2_Torba_BrownBag-0-BrownBag.jpg',
+  '20250913_p1_Suknia-Czerwona-M-Czerwona_p2_Torba_EvenOdd-0-EvenOdd.jpg',
+  '20250913_p1_Suknia-Czerwona-M-Czerwona_p2_Torba_GreenBag-0-GreenBag.jpg'
+];
+
 function init() {
-  const files = [
-    '20250913_p1-Torba-EvenOdd-0-EvenOdd.jpg',
-    '20250913_p1-Torba-GreenBag-0-GreenBag.JPEG',
-    '20250913_p1_Suknia-Czerwona-M-Czerwona-.JPEG',
-    '20250913_p1_Suknia-Czerwona-M-Czerwona_p2_Torba_BrownBag-0-BrownBag.jpg',
-    '20250913_p1_Suknia-Czerwona-M-Czerwona_p2_Torba_EvenOdd-0-EvenOdd.jpg',
-    '20250913_p1_Suknia-Czerwona-M-Czerwona_p2_Torba_GreenBag-0-GreenBag.jpg',
-    '20250913_p1_Torba-BrownBag-0-BrownBag.JPEG'
-  ];
   const images = files.map(parseFileName);
   const productsByType = buildProductImageMap(images);
   const selected = {};
