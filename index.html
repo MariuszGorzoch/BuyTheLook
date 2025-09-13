@@ -117,7 +117,7 @@ body {
   column-count: 3;
   column-gap: 10px;
 }
-#collage img {
+#collage .collage-item > img {
   width: 100%;
   height: auto;
   display: block;
@@ -136,10 +136,17 @@ body {
   background: rgba(0, 0, 0, 0.7);
   color: #fff;
   padding: 4px 6px;
-  font-weight: bold;
+  font-weight: normal;
   font-family: sans-serif;
   font-size: 14px;
   line-height: 1.2;
+}
+.product-info img {
+  height: 1em;
+  width: auto;
+  vertical-align: middle;
+  margin-right: 4px;
+  display: inline;
 }
 #logo {
   position: absolute;
@@ -253,7 +260,7 @@ function updateFilterImages(filters, allImages, selected) {
     });
   }
 
-function renderImages(images) {
+function renderImages(images, productMap) {
   const collage = document.getElementById('collage');
   collage.innerHTML = '';
   images.forEach(img => {
@@ -270,7 +277,10 @@ function renderImages(images) {
       .map(p => {
         const sizePart = p.size && p.size !== '0' ? ` ${p.size}` : '';
         const displayName = p.name === p.brand ? p.name : `${p.brand} ${p.name}`;
-        return `${displayName}${sizePart}`;
+        const typeImage = productMap[p.type] && productMap[p.type][p.brand]
+          ? `<img src="${productMap[p.type][p.brand]}" alt="">`
+          : '';
+        return `${typeImage}${p.type} ${displayName}${sizePart}`;
       })
       .join('<br>');
     container.appendChild(info);
@@ -347,8 +357,8 @@ async function init() {
           }
           updateFilterImages(filters, images, selected);
           updateFilterButtons(buttons, selected, filters);
-          const filteredImages = filterImages(images, selected);
-          renderImages(filteredImages);
+            const filteredImages = filterImages(images, selected);
+            renderImages(filteredImages, productsByType);
           wrapper.classList.remove('open');
         });
         options.appendChild(imgEl);
@@ -357,8 +367,8 @@ async function init() {
     });
     updateFilterImages(filters, images, selected);
     updateFilterButtons(buttons, selected, filters);
-    const filteredImages = filterImages(images, selected);
-    renderImages(filteredImages);
+      const filteredImages = filterImages(images, selected);
+      renderImages(filteredImages, productsByType);
   } catch (err) {
     console.error('Failed to load product images', err);
   }
