@@ -117,7 +117,7 @@ body {
   column-count: 3;
   column-gap: 10px;
 }
-#collage img {
+#collage .collage-item > img {
   width: 100%;
   height: auto;
   display: block;
@@ -140,6 +140,13 @@ body {
   font-family: sans-serif;
   font-size: 14px;
   line-height: 1.2;
+}
+.product-info img {
+  height: 1em;
+  width: auto;
+  vertical-align: middle;
+  margin-right: 4px;
+  display: inline;
 }
 #logo {
   position: absolute;
@@ -271,7 +278,7 @@ function renderImages(images, productMap) {
         const sizePart = p.size && p.size !== '0' ? ` ${p.size}` : '';
         const displayName = p.name === p.brand ? p.name : `${p.brand} ${p.name}`;
         const typeImage = productMap[p.type] && productMap[p.type][p.brand]
-          ? `<img src="${productMap[p.type][p.brand]}" style="height:1em;vertical-align:middle;margin-right:4px;">`
+          ? `<img src="${productMap[p.type][p.brand]}" alt="">`
           : '';
         return `${typeImage}${p.type} ${displayName}${sizePart}`;
       })
