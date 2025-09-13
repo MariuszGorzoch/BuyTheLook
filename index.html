@@ -35,14 +35,38 @@ body {
       border: none;
       cursor: pointer;
       font: inherit;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-    .filter button img {
+      position: relative;
       width: 60px;
       height: 60px;
+      padding: 0;
+    }
+    .filter button .preview {
+      width: 100%;
+      height: 100%;
       object-fit: cover;
+      display: none;
+    }
+    .filter button .label {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      white-space: pre-line;
+      font-size: 12px;
+    }
+    .filter button.selected .preview {
+      display: block;
+    }
+    .filter button.selected .label {
+      top: auto;
+      bottom: 0;
+      left: 0;
+      transform: none;
+      width: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      color: #fff;
+      padding: 2px 0;
     }
   .filter .options {
     display: none;
@@ -168,18 +192,18 @@ function updateFilterImages(filters, allImages, selected) {
 
   function updateFilterButtons(buttons, selected, filters) {
     Object.entries(buttons).forEach(([type, data]) => {
-      const { label, preview } = data;
+      const { button, label, preview } = data;
       if (selected[type]) {
-        label.style.display = 'none';
         const imgEl = filters[type][selected[type]];
         if (imgEl) {
           preview.src = imgEl.src;
-          preview.style.display = 'inline-block';
+          button.classList.add('selected');
+          label.textContent = selected[type];
         }
       } else {
-        label.style.display = 'inline';
-        label.textContent = type;
-        preview.style.display = 'none';
+        button.classList.remove('selected');
+        label.textContent = `Wybierz\n${type}`;
+        preview.removeAttribute('src');
       }
     });
   }
@@ -216,9 +240,10 @@ function init() {
     wrapper.className = 'filter';
     const button = document.createElement('button');
     const preview = document.createElement('img');
-    preview.style.display = 'none';
+    preview.className = 'preview';
     const label = document.createElement('span');
-    label.textContent = type;
+    label.className = 'label';
+    label.textContent = `Wybierz\n${type}`;
     button.appendChild(preview);
     button.appendChild(label);
     const options = document.createElement('div');
