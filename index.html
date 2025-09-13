@@ -158,6 +158,12 @@ function updateFilterImages(filters, allImages, selected) {
   });
 }
 
+function updateFilterButtons(buttons, selected) {
+  Object.entries(buttons).forEach(([type, button]) => {
+    button.textContent = selected[type] ? `${type}: ${selected[type]}` : type;
+  });
+}
+
 function renderImages(images) {
   const collage = document.getElementById('collage');
   collage.innerHTML = '';
@@ -182,6 +188,7 @@ function init() {
   const productsByType = buildProductImageMap(images);
   const selected = {};
   const filters = {};
+  const buttons = {};
   const filterContainer = document.getElementById('filters');
 
   Object.keys(productsByType).forEach(type => {
@@ -202,6 +209,7 @@ function init() {
     filterContainer.appendChild(wrapper);
     filters[type] = {};
     selected[type] = null;
+    buttons[type] = button;
     Object.entries(productsByType[type]).forEach(([brand, imgPath]) => {
       const imgEl = document.createElement('img');
       imgEl.src = imgPath;
@@ -216,6 +224,7 @@ function init() {
           imgEl.classList.add('selected');
         }
         updateFilterImages(filters, images, selected);
+        updateFilterButtons(buttons, selected);
         const filteredImages = filterImages(images, selected);
         renderImages(filteredImages);
         wrapper.classList.remove('open');
@@ -225,6 +234,7 @@ function init() {
     });
   });
   updateFilterImages(filters, images, selected);
+  updateFilterButtons(buttons, selected);
   const filteredImages = filterImages(images, selected);
   renderImages(filteredImages);
 }
