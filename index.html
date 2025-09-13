@@ -103,10 +103,10 @@ function parseFileName(file) {
 function buildProductImageMap(images) {
   const map = {};
   images.forEach(img => {
-    img.products.forEach(p => {
-      if (!map[p.type]) map[p.type] = {};
-      if (!map[p.type][p.brand]) map[p.type][p.brand] = img.file;
-    });
+    if (img.products.length !== 1) return;
+    const p = img.products[0];
+    if (!map[p.type]) map[p.type] = {};
+    map[p.type][p.brand] = img.file;
   });
   return map;
 }
