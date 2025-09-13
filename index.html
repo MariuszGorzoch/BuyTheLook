@@ -9,106 +9,152 @@ html, body {
   height: 100%;
   overflow: hidden;
 }
-
 body {
   display: flex;
   flex-direction: column;
 }
-
-#asset-selector, #dress-selector {
+#filters {
   display: flex;
-  overflow-x: auto;
-  padding: 10px;
   gap: 10px;
+  padding: 10px;
   background: #f2f2f2;
-  position: relative;
-  z-index: 2;
+  overflow-x: auto;
 }
-
-#asset-selector img, #dress-selector img {
-  height: 80px;
-  cursor: pointer;
-  border: 2px solid transparent;
+#filters label {
+  display: flex;
+  flex-direction: column;
+  font-family: sans-serif;
+  font-size: 14px;
 }
-
-#asset-selector img.selected, #dress-selector img.selected {
-  border-color: #007bff;
-}
-
 #main-display {
   flex: 1;
+  overflow-y: auto;
   display: flex;
-  align-items: center;
+  flex-wrap: wrap;
   justify-content: center;
+  align-content: flex-start;
+  gap: 10px;
+  padding: 10px;
   background: #fff;
-  position: relative;
-  z-index: 1;
-  min-height: 0;
 }
-
 #main-display img {
   max-width: 100%;
-  max-height: 100%;
+  height: auto;
   object-fit: contain;
-  pointer-events: none;
 }
 </style>
 </head>
 <body>
-
-<div id="asset-selector"></div>
-<div id="main-display"><img id="output" src="" alt="Selected look"></div>
-<div id="dress-selector"></div>
-
+<div id="filters"></div>
+<div id="main-display"></div>
 <script>
-const dresses = [
-  { id: '01', src: 'Dress-01.JPEG' }
-];
-const assets = [
-  { id: '01', src: 'Torba-01.JPEG' },
-  { id: '03', src: 'Torba-03.JPEG' },
-  { id: '04', src: 'Torba-04.JPEG' }
-];
-
-let selectedDress = dresses[0].id;
-let selectedAsset = null;
-
-const assetContainer = document.getElementById('asset-selector');
-const dressContainer = document.getElementById('dress-selector');
-const outputImg = document.getElementById('output');
-
-function updateDisplay() {
-  let src = `Dress-${selectedDress}`;
-  if (selectedAsset) {
-    src += `-Torba-${selectedAsset}.jpg`;
-  } else {
-    src += '.JPEG';
-  }
-  outputImg.src = src;
+function parseFileName(file) {
+  const base = file.replace(/\.[^.]+$/, '');
+  const [shotId, ...productParts] = base.split('_p');
+  const products = productParts.map(part => {
+    const tokens = part.split('_');
+    const num = tokens[0];
+    let type, brand, size, name;
+    if (tokens.length === 1) {
+      const [id, t, b, s, ...n] = tokens[0].split('-');
+      type = t; brand = b; size = s; name = n.join('-');
+    } else if (tokens.length === 2) {
+      const rest = tokens[1].split('-');
+      type = rest[0]; brand = rest[1]; size = rest[2]; name = rest.slice(3).join('-');
+    } else {
+      type = tokens[1];
+      const rest = tokens.slice(2).join('_').split('-');
+      brand = rest[0]; size = rest[1]; name = rest.slice(2).join('-');
+    }
+    return { number: num, type, brand, size, name };
+  });
+  return { shotId, file, products };
 }
 
-function buildSelector(container, items, type) {
-  items.forEach(item => {
-    const img = document.createElement('img');
-    img.src = item.src;
-    img.addEventListener('click', () => {
-      if (type === 'dress') {
-        selectedDress = item.id;
-        dressContainer.querySelectorAll('img').forEach(el => el.classList.remove('selected'));
-      } else {
-        selectedAsset = item.id;
-        assetContainer.querySelectorAll('img').forEach(el => el.classList.remove('selected'));
-      }
-      img.classList.add('selected');
-      updateDisplay();
+function buildProductsByType(images) {
+  const map = {};
+  images.forEach(img => {
+    img.products.forEach(p => {
+      if (!map[p.type]) map[p.type] = new Set();
+      map[p.type].add(p.brand);
     });
-    container.appendChild(img);
+  });
+  return map;
+}
+
+function filterImages(images, selected) {
+  return images.filter(img =>
+    Object.entries(selected).every(([type, brand]) =>
+      !brand || img.products.some(p => p.type === type && p.brand === brand)
+    )
+  );
+}
+
+function updateFilterOptions(filters, allImages, selected) {
+  Object.entries(filters).forEach(([type, select]) => {
+    const tempSelected = { ...selected, [type]: null };
+    const filtered = filterImages(allImages, tempSelected);
+    const options = new Set();
+    filtered.forEach(img => {
+      img.products.filter(p => p.type === type).forEach(p => options.add(p.brand));
+    });
+    const current = selected[type];
+    select.innerHTML = '<option value="">All</option>' +
+      Array.from(options).map(o => `<option value="${o}">${o}</option>`).join('');
+    if (current && options.has(current)) {
+      select.value = current;
+    } else {
+      select.value = '';
+      selected[type] = null;
+    }
   });
 }
 
-buildSelector(assetContainer, assets, 'asset');
-buildSelector(dressContainer, dresses, 'dress');
-updateDisplay();
+function renderImages(container, images) {
+  container.innerHTML = '';
+  images.forEach(img => {
+    const el = document.createElement('img');
+    el.src = img.file;
+    container.appendChild(el);
+  });
+}
+
+function init() {
+  const files = [
+    '20250913_p1-Torba-EvenOdd-0-EvenOdd.jpg',
+    '20250913_p1-Torba-GreenBag-0-GreenBag.JPEG',
+    '20250913_p1_Suknia-Czerwona-M-Czerwona-.JPEG',
+    '20250913_p1_Suknia-Czerwona-M-Czerwona_p2_Torba_BrownBag-0-BrownBag.jpg',
+    '20250913_p1_Suknia-Czerwona-M-Czerwona_p2_Torba_EvenOdd-0-EvenOdd.jpg',
+    '20250913_p1_Suknia-Czerwona-M-Czerwona_p2_Torba_GreenBag-0-GreenBag.jpg',
+    '20250913_p1_Torba-BrownBage-0-BrownBag.JPEG'
+  ];
+  const images = files.map(parseFileName);
+  const productsByType = buildProductsByType(images);
+  const selected = {};
+  const filters = {};
+  const filterContainer = document.getElementById('filters');
+  Object.keys(productsByType).forEach(type => {
+    const label = document.createElement('label');
+    label.textContent = type;
+    const select = document.createElement('select');
+    select.addEventListener('change', () => {
+      selected[type] = select.value || null;
+      updateFilterOptions(filters, images, selected);
+      const filteredImages = filterImages(images, selected);
+      renderImages(document.getElementById('main-display'), filteredImages);
+    });
+    label.appendChild(select);
+    filterContainer.appendChild(label);
+    filters[type] = select;
+    selected[type] = null;
+  });
+  updateFilterOptions(filters, images, selected);
+  const filteredImages = filterImages(images, selected);
+  renderImages(document.getElementById('main-display'), filteredImages);
+}
+
+init();
 </script>
 </body>
 </html>
