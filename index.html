@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Buy The Look</title>
+<style>
+body { margin:0; display:flex; flex-direction:column; height:100vh; }
+#asset-selector, #dress-selector { display:flex; overflow-x:auto; padding:10px; gap:10px; background:#f2f2f2; }
+#asset-selector img, #dress-selector img { height:80px; cursor:pointer; border:2px solid transparent; }
+#asset-selector img.selected, #dress-selector img.selected { border-color:#007bff; }
+#main-display { flex:1; display:flex; align-items:center; justify-content:center; background:#fff; }
+#main-display img { max-width:100%; max-height:100%; }
+</style>
+</head>
+<body>
+
+<div id="asset-selector"></div>
+<div id="main-display"><img id="output" src="" alt="Selected look"></div>
+<div id="dress-selector"></div>
+
+<script>
+const dresses = [
+  { id: '01', src: 'Dress-01.JPEG' }
+];
+const assets = [
+  { id: '01', src: 'Torba-01.JPEG' },
+  { id: '03', src: 'Torba-03.JPEG' },
+  { id: '04', src: 'Torba-04.JPEG' }
+];
+
+let selectedDress = dresses[0].id;
+let selectedAsset = null;
+
+const assetContainer = document.getElementById('asset-selector');
+const dressContainer = document.getElementById('dress-selector');
+const outputImg = document.getElementById('output');
+
+function updateDisplay() {
+  let src = `Dress-${selectedDress}`;
+  if (selectedAsset) {
+    src += `-Torba-${selectedAsset}.jpg`;
+  } else {
+    src += '.JPEG';
+  }
+  outputImg.src = src;
+}
+
+function buildSelector(container, items, type) {
+  items.forEach(item => {
+    const img = document.createElement('img');
+    img.src = item.src;
+    img.addEventListener('click', () => {
+      if (type === 'dress') {
+        selectedDress = item.id;
+        dressContainer.querySelectorAll('img').forEach(el => el.classList.remove('selected'));
+      } else {
+        selectedAsset = item.id;
+        assetContainer.querySelectorAll('img').forEach(el => el.classList.remove('selected'));
+      }
+      img.classList.add('selected');
+      updateDisplay();
+    });
+    container.appendChild(img);
+  });
+}
+
+buildSelector(assetContainer, assets, 'asset');
+buildSelector(dressContainer, dresses, 'dress');
+updateDisplay();
+</script>
+</body>
+</html>
