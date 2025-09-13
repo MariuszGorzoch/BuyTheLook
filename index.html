@@ -54,42 +54,30 @@ body {
 }
 #main-display {
   flex: 1;
-  overflow: hidden;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  position: relative;
+  overflow-y: auto;
+  overflow-x: hidden;
   padding: 10px;
   background: #fff;
 }
-#main-display img {
-  max-width: 100%;
-  max-height: calc(100vh - 220px);
-  width: auto;
-  height: auto;
-  object-fit: contain;
+#collage {
+  column-count: 3;
+  column-gap: 10px;
 }
-#main-display .nav {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  background: rgba(0,0,0,0.5);
-  color: #fff;
-  border: none;
-  font-size: 24px;
-  padding: 5px 10px;
-  cursor: pointer;
+#collage img {
+  width: 100%;
+  margin-bottom: 10px;
+  display: block;
+  object-fit: cover;
 }
-#main-display .prev { left: 10px; }
-#main-display .next { right: 10px; }
+#collage img.size-small { height: 120px; }
+#collage img.size-medium { height: 180px; }
+#collage img.size-large { height: 240px; }
 </style>
 </head>
 <body>
 <div id="filters"></div>
 <div id="main-display">
-  <button class="nav prev">&#10094;</button>
-  <img id="carousel-image" />
-  <button class="nav next">&#10095;</button>
+  <div id="collage"></div>
 </div>
 <script>
 function parseFileName(file) {
@@ -156,35 +144,16 @@ function updateFilterImages(filters, allImages, selected) {
   });
 }
 
-let currentImages = [];
-let currentIndex = 0;
-
-function showImage() {
-  const imgEl = document.getElementById('carousel-image');
-  if (!currentImages.length) {
-    imgEl.style.display = 'none';
-    return;
-  }
-  imgEl.style.display = '';
-  imgEl.src = currentImages[currentIndex].file;
-}
-
-function showPrev() {
-  if (!currentImages.length) return;
-  currentIndex = (currentIndex - 1 + currentImages.length) % currentImages.length;
-  showImage();
-}
-
-function showNext() {
-  if (!currentImages.length) return;
-  currentIndex = (currentIndex + 1) % currentImages.length;
-  showImage();
-}
-
-function renderImages(container, images) {
-  currentImages = images;
-  currentIndex = 0;
-  showImage();
+function renderImages(images) {
+  const collage = document.getElementById('collage');
+  collage.innerHTML = '';
+  const sizes = ['size-small', 'size-medium', 'size-large'];
+  images.forEach((img, index) => {
+    const imgEl = document.createElement('img');
+    imgEl.src = img.file;
+    imgEl.classList.add(sizes[index % sizes.length]);
+    collage.appendChild(imgEl);
+  });
 }
 
 function init() {
@@ -202,23 +171,6 @@ function init() {
   const selected = {};
   const filters = {};
   const filterContainer = document.getElementById('filters');
-  const mainDisplay = document.getElementById('main-display');
-  mainDisplay.querySelector('.prev').addEventListener('click', showPrev);
-  mainDisplay.querySelector('.next').addEventListener('click', showNext);
-  let startX = null;
-  mainDisplay.addEventListener('touchstart', e => {
-    startX = e.touches[0].clientX;
-  });
-  mainDisplay.addEventListener('touchend', e => {
-    if (startX === null) return;
-    const diff = e.changedTouches[0].clientX - startX;
-    if (diff > 50) {
-      showPrev();
-    } else if (diff < -50) {
-      showNext();
-    }
-    startX = null;
-  });
 
   Object.keys(productsByType).forEach(type => {
     const wrapper = document.createElement('details');
@@ -247,7 +199,7 @@ function init() {
         }
         updateFilterImages(filters, images, selected);
         const filteredImages = filterImages(images, selected);
-        renderImages(document.getElementById('main-display'), filteredImages);
+        renderImages(filteredImages);
       });
       options.appendChild(imgEl);
       filters[type][brand] = imgEl;
@@ -255,7 +207,7 @@ function init() {
   });
   updateFilterImages(filters, images, selected);
   const filteredImages = filterImages(images, selected);
-  renderImages(document.getElementById('main-display'), filteredImages);
+  renderImages(filteredImages);
 }
 
 init();
