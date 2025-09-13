@@ -114,19 +114,19 @@ body {
   z-index: 1;
 }
 #collage {
-  column-count: 3;
-  column-gap: 10px;
-}
-#collage .collage-item > img {
-  width: 100%;
-  height: auto;
-  display: block;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 10px;
 }
 
 .collage-item {
   position: relative;
-  margin-bottom: 10px;
-  break-inside: avoid;
+}
+
+#collage .collage-item > img {
+  width: 100%;
+  height: auto;
+  display: block;
 }
 
 .product-info {
@@ -282,6 +282,10 @@ function renderImages(images, productMap) {
 
     const imgEl = document.createElement('img');
     imgEl.setAttribute('data-src', img.file);
+    imgEl.style.minHeight = '300px';
+    imgEl.addEventListener('load', () => {
+      imgEl.style.minHeight = '';
+    });
     container.appendChild(imgEl);
 
     const info = document.createElement('div');
